@@ -1,15 +1,24 @@
 import random
 
+
+def print_hand(hand):
+    """prints dealt hand in readable format"""
+    for card in hand:
+        print(card, end=" ")
+    print()
+
+
 def deal_p2(available):
     """deals cards to p2 from the 39 available cards after dealing to p1"""
     available_p2_cards = available[:]
-    p2_cards = []
+    p2_cards_ = []
     # deal 13 cards to p2 (add those cards to p2_cards list)
     for x in range(13):
         random_card = random.choice(available_p2_cards)
-        p2_cards.append(random_card)
+        p2_cards_.append(random_card)
         available_p2_cards.remove(random_card)
-    return p2_cards
+    return p2_cards_
+
 
 def check_high_cards(hand):
     """checks for any high cards in a hand and sums up the score and returns it"""
@@ -25,6 +34,7 @@ def check_high_cards(hand):
             total_score += 1
     return total_score
 
+
 def check_doubleton(hand, suit):
     """parameters are the hand and the suit character. Function returns either 0 or 1 score depending on if there are
     exactly 2 cards in that suit"""
@@ -36,6 +46,7 @@ def check_doubleton(hand, suit):
         return 1
     else:
         return 0
+
 
 def check_singleton(hand, suit):
     """parameters are the hand and the suit character. Function returns either 0 or 2 score depending on if there is
@@ -49,7 +60,10 @@ def check_singleton(hand, suit):
     else:
         return 0
 
+
 def check_void(hand, suit):
+    """parameters are the hand and the suit character. Function returns either 0 or 5 score depending on if there are
+    zero cards in the suit"""
     count = 0
     for card in hand:
         if suit in card:
@@ -58,6 +72,20 @@ def check_void(hand, suit):
         return 5
     else:
         return 0
+
+
+def get_best_outcome(score):
+    if score < 20:
+        return "Pass"
+    elif score <= 25:
+        return "Part score"
+    elif score <= 31:
+        return "Game"
+    elif score <= 35:
+        return "Small slam"
+    else:
+        return "Grand slam"
+
 
 # standard 52 card deck
 cards = ['AC', '2C', '3C', '4C', '5C', '6C', '7C', '8C', '9C', '0C', 'JC', 'QC', 'KC',
@@ -68,33 +96,59 @@ cards = ['AC', '2C', '3C', '4C', '5C', '6C', '7C', '8C', '9C', '0C', 'JC', 'QC',
 # suits = Clubs, Diamonds, Hearts, Spades
 suits = ['C', 'D', 'H', 'S']
 
-# available_cards takes copy of cards to start off
-available_cards = cards[:]
-p1_cards = []
-total_points = 0
+choice = "y"
 
-# deal 13 cards to p1 (add those cards to p1_cards list)
-for i in range(13):
-    rand_card = random.choice(available_cards)
-    p1_cards.append(rand_card)
-    available_cards.remove(rand_card)
+# number of simulated p2 hands
+num_of_sims = 1000
 
-print("p1 cards: ", p1_cards)
+while choice.lower() == "y":
+    score_board = {
+        "Pass": 0,
+        "Part score": 0,
+        "Game": 0,
+        "Small slam": 0,
+        "Grand slam": 0
+    }
 
-# print("available_cards: ", available_cards)
-# print("size of available cards: ", len(available_cards))
+    # available_cards takes copy of cards to start off
+    available_cards = cards[:]
+    p1_cards = []
 
-# simulation -> calculate score n times
-for i in range(1):
-    p2_cards = deal_p2(available_cards)
-    print("p2 cards: ", p2_cards)
+    # deal 13 cards to p1 (add those cards to p1_cards list)
+    for i in range(13):
+        rand_card = random.choice(available_cards)
+        p1_cards.append(rand_card)
+        available_cards.remove(rand_card)
 
-    # add high card scores
-    total_points += check_high_cards(p1_cards) + check_high_cards(p2_cards)
-
+    # calculate the score for p1's hand
+    p1_hand_score = check_high_cards(p1_cards)
     for s in suits:
-        total_points += check_doubleton(p1_cards, s) + check_singleton(p1_cards, s) + check_void(p1_cards, s)
-        total_points += check_doubleton(p2_cards, s) + check_singleton(p2_cards, s) + check_void(p2_cards, s)
+        p1_hand_score += check_doubleton(p1_cards, s) + check_singleton(p1_cards, s) + check_void(p1_cards, s)
 
+    # print p1 hand info
+    print("Here is your hand: ")
+    print_hand(p1_cards)
+    print("This hand is worth {} points.".format(p1_hand_score))
+    print("Running simulation...\n")
 
-    print("total points:", total_points)
+    # simulation -> calculate score n times
+    for i in range(num_of_sims):
+        total_points = 0
+        p2_cards = deal_p2(available_cards)
+
+        # add p1 hand score and high card scores for p2 to total points
+        total_points += p1_hand_score + check_high_cards(p2_cards)
+
+        # add distribution scores for p2 to total points
+        for s in suits:
+            total_points += check_doubleton(p2_cards, s) + check_singleton(p2_cards, s) + check_void(p2_cards, s)
+
+        outcome = get_best_outcome(total_points)
+        score_board[outcome] += 1
+
+    print("The estimated probability based on {} simulated hands: ".format(num_of_sims))
+    for outcome in score_board:
+        percentage = round(float(score_board[outcome] / num_of_sims) * 100, 2)
+        print("{}: {}%".format(outcome, percentage))
+
+    choice = input("\nAnother hand? (y/n) >> ")
