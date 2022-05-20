@@ -1,4 +1,4 @@
-# Monte_Carlo_Simulation
+# Monte-Carlo-Simulation
 
 Each player is dealt 13 cards. Thus, each player knows the location of the 13 cards in their hand, and 
 the location of the other 39 cards is a mystery. Each player can estimate the strength of their own hand 
